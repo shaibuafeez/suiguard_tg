@@ -1,0 +1,1876 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuiGuard - URL Security Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient-light: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --bg-gradient-dark: linear-gradient(135deg, #1a1a1a 0%, #2d3436 100%);
+        }
+
+        body {
+            transition: background 0.3s ease;
+        }
+
+        body[data-bs-theme="light"] {
+            background: var(--bg-gradient-light);
+        }
+
+        body[data-bs-theme="dark"] {
+            background: var(--bg-gradient-dark);
+            color: #e0e0e0;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
+            padding: 0.5rem;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        body[data-bs-theme="light"] .theme-toggle {
+            background: #fff;
+            color: #000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        body[data-bs-theme="dark"] .theme-toggle {
+            background: #2d3436;
+            color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .card {
+            transition: all 0.3s ease;
+        }
+
+        body[data-bs-theme="dark"] .card {
+            background: #2d3436;
+            border-color: #373737;
+        }
+
+        body[data-bs-theme="dark"] .card.bg-light {
+            background: #373737 !important;
+        }
+
+        body[data-bs-theme="dark"] .text-muted {
+            color: #a0a0a0 !important;
+        }
+
+        .container {
+            padding-top: 50px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            background: linear-gradient(45deg, #4158d0, #c850c0);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 20px;
+        }
+
+        body[data-bs-theme="dark"] .card-header {
+            background: linear-gradient(45deg, #2b3595, #7c3085);
+            border-bottom: 1px solid #404040;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            padding: 12px;
+            border: 2px solid #eee;
+        }
+
+        body[data-bs-theme="dark"] .form-control {
+            background-color: #2d3436;
+            border-color: #404040;
+            color: #e0e0e0;
+        }
+
+        body[data-bs-theme="dark"] .form-control:focus {
+            background-color: #373d3f;
+            border-color: #4a4a4a;
+            color: #e0e0e0;
+            box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-analyze {
+            background: linear-gradient(45deg, #4158d0, #c850c0);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            transition: transform 0.2s;
+        }
+
+        body[data-bs-theme="dark"] .btn-analyze {
+            background: linear-gradient(45deg, #2b3595, #7c3085);
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+        }
+
+        .result-card {
+            margin-top: 20px;
+            display: none;
+        }
+
+        body[data-bs-theme="dark"] .result-card {
+            background-color: #2d3436;
+            border: 1px solid #404040;
+        }
+
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+            font-size: 2.5em;
+            font-weight: bold;
+            color: white;
+        }
+
+        body[data-bs-theme="dark"] .score-circle {
+            background: linear-gradient(45deg, #2b3595, #7c3085);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .api-result {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            background: #f8f9fa;
+        }
+
+        body[data-bs-theme="dark"] .api-result {
+            background: #2d3436;
+            border: 1px solid #404040;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+        }
+
+        body[data-bs-theme="dark"] .loading-spinner {
+            border-color: #404040;
+            border-top-color: #7dcfff;
+        }
+
+        .risk-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        body[data-bs-theme="dark"] .risk-badge {
+            border: 1px solid #404040;
+        }
+
+        body[data-bs-theme="dark"] .risk-badge.low {
+            background-color: rgba(40, 167, 69, 0.15);
+            color: #a9dc76;
+        }
+
+        body[data-bs-theme="dark"] .risk-badge.medium {
+            background-color: rgba(255, 193, 7, 0.15);
+            color: #ffd866;
+        }
+
+        body[data-bs-theme="dark"] .risk-badge.high {
+            background-color: rgba(220, 53, 69, 0.15);
+            color: #ff6188;
+        }
+
+        body[data-bs-theme="dark"] .alert {
+            background-color: #2d3436;
+            border-color: #404040;
+            color: #e0e0e0;
+        }
+
+        body[data-bs-theme="dark"] .alert-warning {
+            background-color: rgba(255, 193, 7, 0.15);
+            border-color: #856404;
+            color: #ffd866;
+        }
+
+        body[data-bs-theme="dark"] .alert-info {
+            background-color: rgba(23, 162, 184, 0.15);
+            border-color: #0c5460;
+            color: #7dcfff;
+        }
+
+        body[data-bs-theme="dark"] .alert-success {
+            background-color: rgba(40, 167, 69, 0.15);
+            border-color: #155724;
+            color: #a9dc76;
+        }
+
+        body[data-bs-theme="dark"] .progress {
+            background-color: #404040;
+        }
+
+        body[data-bs-theme="dark"] a {
+            color: #7dcfff;
+        }
+
+        body[data-bs-theme="dark"] a:hover {
+            color: #a9dc76;
+        }
+
+        body[data-bs-theme="dark"] .alert-link {
+            color: #7dcfff;
+        }
+
+        body[data-bs-theme="dark"] .alert-link:hover {
+            color: #a9dc76;
+        }
+
+        body[data-bs-theme="dark"] table {
+            color: #e0e0e0;
+        }
+
+        body[data-bs-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        body[data-bs-theme="dark"] .list-group-item {
+            background-color: #2d3436;
+            border-color: #404040;
+            color: #e0e0e0;
+        }
+
+        body[data-bs-theme="dark"] .fas,
+        body[data-bs-theme="dark"] .far,
+        body[data-bs-theme="dark"] .fab {
+            color: inherit;
+        }
+
+        /* Submission Modal Styles */
+        .modal-content {
+            border: none;
+            border-radius: 15px;
+        }
+
+        body[data-bs-theme="dark"] .modal-content {
+            background: #2d3436;
+            color: #e0e0e0;
+        }
+
+        .modal-header {
+            border-bottom: none;
+            padding: 1.5rem;
+        }
+
+        body[data-bs-theme="dark"] .modal-header {
+            border-bottom: 1px solid #404040;
+        }
+
+        .modal-footer {
+            border-top: none;
+            padding: 1.5rem;
+        }
+
+        body[data-bs-theme="dark"] .modal-footer {
+            border-top: 1px solid #404040;
+        }
+
+        .submit-suspicious-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .submit-suspicious-btn {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            background: linear-gradient(45deg, #4158d0, #c850c0);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .submit-suspicious-btn i {
+            margin-right: 8px;
+            font-size: 1.1rem;
+        }
+
+        .submit-suspicious-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        body[data-bs-theme="dark"] .submit-suspicious-btn {
+            background: linear-gradient(45deg, #2b3595, #7c3085);
+        }
+
+        .submit-tooltip {
+            position: absolute;
+            bottom: 100%;
+            right: 0;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .submit-suspicious-container:hover .submit-tooltip {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            /* Alignment fixes */
+            .container {
+                padding: 0;
+                margin: 0;
+                max-width: 100%;
+            }
+
+            .card {
+                margin: 0;
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            .card-body {
+                padding: 20px 15px;
+            }
+
+            /* Input group alignment */
+            .input-group {
+                margin: 0;
+                padding: 0;
+            }
+
+            .form-control,
+            .btn-analyze {
+                margin: 0;
+                width: 100% !important;
+            }
+
+            /* Modal alignments */
+            .modal-dialog {
+                margin: 0;
+                max-width: 100%;
+            }
+
+            .modal-body {
+                padding: 20px 15px;
+            }
+
+            /* Bottom buttons alignment */
+            .ai-assistant-btn,
+            .submit-suspicious-btn {
+                bottom: 20px;
+                height: 48px;
+            }
+
+            .ai-assistant-btn {
+                left: 20px;
+                width: calc(50% - 25px);
+            }
+
+            .submit-suspicious-btn {
+                right: 20px;
+                width: calc(50% - 25px);
+            }
+
+            /* Adjust floating action buttons for mobile */
+            .ai-assistant-btn,
+            .submit-suspicious-btn {
+                position: fixed;
+                bottom: 20px;
+                height: 50px;
+                z-index: 1000;
+                border-radius: 25px;
+                padding: 0 20px;
+                font-size: 14px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+
+            .ai-assistant-btn {
+                left: 10px;
+                width: calc(50% - 15px);
+            }
+
+            .submit-suspicious-btn {
+                right: 10px;
+                width: calc(50% - 15px);
+            }
+
+            /* Hide tooltip on mobile to save space */
+            .submit-tooltip {
+                display: none;
+            }
+
+            /* Adjust theme toggle for mobile */
+            .theme-toggle {
+                position: fixed;
+                top: 12px;
+                right: 12px;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.15);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                color: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                z-index: 1000;
+            }
+
+            body[data-bs-theme="dark"] .theme-toggle {
+                background: rgba(0, 0, 0, 0.2);
+                color: #fff;
+                border-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .theme-toggle i {
+                font-size: 14px;
+            }
+
+            .theme-toggle:active {
+                transform: scale(0.92);
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .card {
+                margin: 0;
+                border-radius: 0;
+            }
+
+            .card-header {
+                padding: 15px 10px;
+            }
+
+            .card-body {
+                padding: 15px 10px;
+            }
+
+            /* Enhanced header styling */
+            .card-header {
+                background: linear-gradient(135deg, #4158d0, #c850c0);
+                padding: 25px 15px;
+                border: none;
+                position: relative;
+                text-align: center;
+            }
+
+            .card-header h1,
+            .card-header p {
+                color: white !important;
+                margin: 0;
+                position: relative;
+                z-index: 2;
+            }
+
+            .card-header h1 {
+                font-size: 24px;
+                font-weight: 600;
+                letter-spacing: 0.5px;
+                margin-bottom: 5px;
+            }
+
+            .card-header p {
+                font-size: 14px;
+                opacity: 0.9;
+                font-weight: 400;
+            }
+
+            /* Gradient overlay for better text readability */
+            .card-header::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: linear-gradient(45deg, rgba(65, 88, 208, 0.2), rgba(200, 80, 192, 0.2));
+                z-index: 1;
+            }
+
+            body[data-bs-theme="dark"] .card-header {
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            /* Adjust input group for mobile */
+            .input-group {
+                flex-direction: column;
+            }
+
+            .input-group .form-control {
+                border-radius: 8px;
+                margin-bottom: 10px;
+            }
+
+            .input-group .btn-analyze {
+                width: 100%;
+                border-radius: 8px;
+            }
+
+            /* Improve card layout for mobile */
+            .card {
+                border: none;
+                box-shadow: none;
+                background: transparent;
+            }
+
+            .card-header {
+                background: linear-gradient(135deg, #6366f1, #4f46e5);
+                color: white;
+                border-radius: 0;
+                text-align: center;
+                padding: 20px 15px;
+            }
+
+            .card-header h1 {
+                font-size: 1.5rem;
+                margin: 0;
+            }
+
+            /* Improve form elements for mobile */
+            .form-control {
+                font-size: 16px; /* Prevents iOS zoom on focus */
+                padding: 12px;
+            }
+
+            /* Adjust modal for mobile */
+            .modal-dialog {
+                margin: 10px;
+            }
+
+            .modal-content {
+                border-radius: 15px;
+            }
+
+            .modal-body {
+                padding: 15px;
+            }
+
+            /* Enhance AI Assistant button */
+            .ai-assistant-btn {
+                background: linear-gradient(45deg, #11998e, #38ef7d);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                font-weight: 500;
+                transition: all 0.3s ease;
+                border: none;
+                height: 45px;
+            }
+
+            .ai-assistant-btn i {
+                font-size: 16px;
+            }
+
+            .ai-assistant-btn:active {
+                transform: scale(0.98);
+            }
+
+            body[data-bs-theme="dark"] .ai-assistant-btn {
+                background: linear-gradient(45deg, #0f8a7d, #32d76f);
+            }
+
+            /* Enhance search input styling */
+            .input-group {
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                border-radius: 12px;
+                padding: 10px;
+                margin: 15px 0;
+            }
+
+            .form-control {
+                background: rgba(255, 255, 255, 0.95);
+                border: 1px solid rgba(99, 102, 241, 0.1);
+                border-radius: 8px !important;
+                padding: 12px 15px;
+                font-size: 16px;
+                transition: all 0.3s ease;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            }
+
+            .form-control:focus {
+                border-color: #6366f1;
+                box-shadow: 0 2px 12px rgba(99, 102, 241, 0.15);
+                transform: translateY(-1px);
+            }
+
+            body[data-bs-theme="dark"] .form-control {
+                background: rgba(0, 0, 0, 0.8);
+                border-color: rgba(255, 255, 255, 0.1);
+                color: white;
+            }
+
+            .btn-analyze {
+                background: linear-gradient(45deg, #6366f1, #4f46e5);
+                border: none;
+                color: white;
+                padding: 12px 20px;
+                font-weight: 500;
+                transition: all 0.3s ease;
+                margin-top: 10px;
+                width: 100%;
+            }
+
+            .btn-analyze:active {
+                transform: scale(0.98);
+            }
+
+            body[data-bs-theme="dark"] .btn-analyze {
+                background: linear-gradient(45deg, #4f46e5, #4338ca);
+            }
+
+            /* Enhanced search box styling */
+            .card-body {
+                padding: 20px 15px;
+            }
+
+            .input-group {
+                margin: 0;
+                padding: 0;
+                background: transparent;
+            }
+
+            .form-control {
+                height: 50px;
+                background: white;
+                border: 2px solid rgba(108, 92, 231, 0.1);
+                border-radius: 12px !important;
+                padding: 10px 15px;
+                font-size: 16px;
+                width: 100%;
+                margin-bottom: 12px;
+                transition: all 0.3s ease;
+            }
+
+            .form-control:focus {
+                border-color: #6c5ce7;
+                box-shadow: 0 4px 12px rgba(108, 92, 231, 0.1);
+                transform: translateY(-1px);
+            }
+
+            body[data-bs-theme="dark"] .form-control {
+                background: rgba(30, 30, 30, 0.95);
+                border-color: rgba(108, 92, 231, 0.2);
+                color: white;
+            }
+
+            .btn-analyze {
+                height: 50px;
+                background: linear-gradient(135deg, #6c5ce7, #a363d9);
+                border: none;
+                border-radius: 12px;
+                color: white;
+                font-weight: 500;
+                font-size: 16px;
+                width: 100%;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+            }
+
+            .btn-analyze i {
+                font-size: 18px;
+            }
+
+            .btn-analyze:active {
+                transform: scale(0.98);
+            }
+
+            /* Wider search box */
+            .card-body {
+                padding: 15px 10px;
+            }
+
+            .input-group {
+                margin: 0;
+                padding: 0;
+                background: transparent;
+                width: 100%;
+            }
+
+            .form-control {
+                height: 48px;
+                background: white;
+                border: 1px solid rgba(65, 88, 208, 0.2);
+                border-radius: 10px !important;
+                padding: 10px 15px;
+                font-size: 16px;
+                width: calc(100% - 10px) !important;
+                margin: 5px;
+                transition: all 0.3s ease;
+            }
+
+            .form-control:focus {
+                border-color: #4158d0;
+                box-shadow: 0 2px 8px rgba(65, 88, 208, 0.1);
+                transform: translateY(-1px);
+            }
+
+            .btn-analyze {
+                height: 48px;
+                background: linear-gradient(135deg, #4158d0, #c850c0);
+                border: none;
+                border-radius: 10px;
+                margin: 5px;
+                width: calc(100% - 10px) !important;
+            }
+
+            /* Improved search box and button alignment */
+            .card-body {
+                padding: 15px;
+            }
+
+            .input-group {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                padding: 0;
+                margin: 0;
+                width: 100%;
+            }
+
+            .form-control {
+                height: 48px;
+                background: white;
+                border: 1px solid rgba(65, 88, 208, 0.2);
+                border-radius: 10px !important;
+                padding: 10px 15px;
+                font-size: 16px;
+                width: 100% !important;
+                margin: 0;
+                transition: all 0.3s ease;
+            }
+
+            .btn-analyze {
+                height: 48px;
+                background: linear-gradient(135deg, #4158d0, #c850c0);
+                border: none;
+                border-radius: 10px;
+                margin: 0;
+                width: 100% !important;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                color: white;
+                font-weight: 500;
+            }
+
+            /* Enhanced AI Assistant Modal */
+            .modal-dialog {
+                margin: 0;
+                position: fixed;
+                right: 0;
+                bottom: 0;
+                top: auto;
+                left: 0;
+                transform: none !important;
+            }
+
+            .modal-content {
+                border-bottom-left-radius: 0;
+                border-bottom-right-radius: 0;
+                border-top-left-radius: 20px;
+                border-top-right-radius: 20px;
+                border: none;
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            }
+
+            .modal-header {
+                padding: 15px;
+                border-bottom: 1px solid rgba(65, 88, 208, 0.1);
+            }
+
+            .modal-body {
+                padding: 15px;
+                max-height: 60vh;
+                overflow-y: auto;
+            }
+
+            .chat-container {
+                padding: 10px;
+                margin: -10px;
+            }
+
+            .chat-message {
+                padding: 12px;
+                margin-bottom: 10px;
+                border-radius: 15px;
+                max-width: 85%;
+            }
+
+            .assistant-message {
+                background: rgba(65, 88, 208, 0.1);
+                margin-right: auto;
+                border-bottom-left-radius: 5px;
+            }
+
+            .user-message {
+                background: linear-gradient(135deg, #4158d0, #c850c0);
+                color: white;
+                margin-left: auto;
+                border-bottom-right-radius: 5px;
+            }
+
+            .input-group.chat-input {
+                flex-direction: row;
+                gap: 8px;
+                padding: 10px 15px;
+                background: white;
+                border-top: 1px solid rgba(65, 88, 208, 0.1);
+            }
+
+            /* Enhanced Report URL Modal */
+            #submitModal .modal-content {
+                border-radius: 20px;
+            }
+
+            #submitModal .modal-header {
+                background: linear-gradient(135deg, #4158d0, #c850c0);
+                color: white;
+                border-top-left-radius: 20px;
+                border-top-right-radius: 20px;
+                padding: 15px;
+            }
+
+            #submitModal .modal-title i {
+                color: white;
+                margin-right: 8px;
+            }
+
+            #submitModal .btn-close {
+                filter: brightness(0) invert(1);
+            }
+
+            .floating-label-group {
+                margin-bottom: 15px;
+                background: rgba(65, 88, 208, 0.05);
+                border-radius: 12px;
+                padding: 12px;
+            }
+
+            .floating-label-group label {
+                color: #4158d0;
+                font-size: 14px;
+                margin-bottom: 8px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .url-input-group {
+                background: white;
+                border: 1px solid rgba(65, 88, 208, 0.2);
+                border-radius: 8px;
+                overflow: hidden;
+            }
+
+            #description {
+                border: 1px solid rgba(65, 88, 208, 0.2);
+                border-radius: 8px;
+                padding: 10px;
+                min-height: 100px;
+                resize: none;
+            }
+
+            /* Bottom action buttons */
+            .ai-assistant-btn,
+            .submit-suspicious-btn {
+                position: fixed;
+                bottom: 15px;
+                height: 45px;
+                border-radius: 22px;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                z-index: 1000;
+            }
+
+            .ai-assistant-btn {
+                left: 15px;
+                width: calc(50% - 20px);
+                background: linear-gradient(45deg, #11998e, #38ef7d);
+                color: white;
+                border: none;
+            }
+
+            .submit-suspicious-btn {
+                right: 15px;
+                width: calc(50% - 20px);
+                background: linear-gradient(135deg, #4158d0, #c850c0);
+                color: white;
+                border: none;
+            }
+
+            /* Dark mode optimizations */
+            body[data-bs-theme="dark"] {
+                background: #121212;
+            }
+
+            body[data-bs-theme="dark"] .card {
+                background: transparent;
+            }
+
+            body[data-bs-theme="dark"] .form-control {
+                background: rgba(255, 255, 255, 0.05);
+                border-color: rgba(255, 255, 255, 0.1);
+                color: white;
+            }
+
+            body[data-bs-theme="dark"] .form-control:focus {
+                background: rgba(255, 255, 255, 0.08);
+                border-color: rgba(255, 255, 255, 0.2);
+                box-shadow: 0 2px 12px rgba(99, 102, 241, 0.1);
+            }
+
+            body[data-bs-theme="dark"] .modal-content {
+                background: #1a1a1a;
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+
+            body[data-bs-theme="dark"] .modal-body {
+                color: rgba(255, 255, 255, 0.9);
+            }
+
+            body[data-bs-theme="dark"] .chat-message.assistant-message {
+                background: rgba(255, 255, 255, 0.08);
+                color: white;
+            }
+
+            body[data-bs-theme="dark"] .input-group.chat-input {
+                background: #1a1a1a;
+                border-top-color: rgba(255, 255, 255, 0.1);
+            }
+
+            body[data-bs-theme="dark"] .floating-label-group {
+                background: rgba(255, 255, 255, 0.03);
+            }
+
+            body[data-bs-theme="dark"] .floating-label-group label {
+                color: rgba(255, 255, 255, 0.8);
+            }
+
+            body[data-bs-theme="dark"] .url-input-group {
+                background: rgba(255, 255, 255, 0.05);
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+
+            body[data-bs-theme="dark"] #description {
+                background: rgba(255, 255, 255, 0.05);
+                border-color: rgba(255, 255, 255, 0.1);
+                color: white;
+            }
+
+            @media (max-width: 768px) {
+                /* Final refinements */
+                .card-header {
+                    padding: 25px 20px;
+                    background: linear-gradient(135deg, #4158d0, #c850c0);
+                }
+
+                .card-header h1 {
+                    color: white;
+                    font-size: 22px;
+                    letter-spacing: 0.3px;
+                    margin-bottom: 8px;
+                }
+
+                .card-header p {
+                    color: rgba(255, 255, 255, 0.95);
+                    font-size: 13px;
+                    letter-spacing: 0.2px;
+                }
+
+                /* Search box refinements */
+                .form-control {
+                    height: 50px;
+                    font-size: 15px;
+                    padding: 12px 15px;
+                    border-radius: 12px !important;
+                    margin-bottom: 10px;
+                    transition: all 0.2s ease;
+                }
+
+                .btn-analyze {
+                    height: 50px;
+                    font-size: 15px;
+                    border-radius: 12px;
+                    font-weight: 500;
+                    letter-spacing: 0.3px;
+                }
+
+                /* Bottom buttons refinements */
+                .ai-assistant-btn,
+                .submit-suspicious-btn {
+                    height: 46px;
+                    bottom: 18px;
+                    font-size: 14px;
+                    letter-spacing: 0.2px;
+                }
+
+                .ai-assistant-btn {
+                    left: 18px;
+                    width: calc(50% - 22px);
+                }
+
+                .submit-suspicious-btn {
+                    right: 10px;
+                    width: calc(50% - 22px);
+                }
+
+                /* Dark mode specific refinements */
+                body[data-bs-theme="dark"] .form-control::placeholder {
+                    color: rgba(255, 255, 255, 0.5);
+                }
+
+                body[data-bs-theme="dark"] .card-body {
+                    background: rgba(0, 0, 0, 0.2);
+                }
+
+                body[data-bs-theme="dark"] .modal-content {
+                    background: #1a1a1a;
+                    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+                }
+            }
+        }
+
+        /* Button styles */
+        .ai-assistant-btn {
+            background: linear-gradient(45deg, #11998e, #38ef7d);
+            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.2);
+        }
+
+        .submit-suspicious-btn {
+            background: linear-gradient(135deg, #4158d0, #c850c0);
+            box-shadow: 0 4px 15px rgba(65, 88, 208, 0.2);
+        }
+
+        .ai-assistant-btn:hover,
+        .submit-suspicious-btn:hover {
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .ai-assistant-btn:hover {
+            box-shadow: 0 6px 20px rgba(17, 153, 142, 0.3);
+        }
+
+        .submit-suspicious-btn:hover {
+            box-shadow: 0 6px 20px rgba(65, 88, 208, 0.3);
+        }
+
+        .ai-assistant-btn:active,
+        .submit-suspicious-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Dark mode adjustments */
+        body[data-bs-theme="dark"] .ai-assistant-btn {
+            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+        }
+
+        body[data-bs-theme="dark"] .submit-suspicious-btn {
+            box-shadow: 0 4px 15px rgba(65, 88, 208, 0.3);
+        }
+
+        /* Fixed positioning container */
+        .action-buttons-container {
+            position: fixed;
+            bottom: 25px;
+            left: 25px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        /* Base button styles */
+        .action-button {
+            position: fixed;
+            bottom: 20px;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            color: white;
+            border: none;
+            z-index: 1000;
+            white-space: nowrap;
+        }
+
+        .ai-assistant-btn {
+            right: 20px;
+            background: linear-gradient(45deg, #11998e, #38ef7d);
+            box-shadow: 0 2px 10px rgba(17, 153, 142, 0.2);
+        }
+
+        .submit-suspicious-btn {
+            left: 20px;
+            background: linear-gradient(135deg, #4158d0, #c850c0);
+            box-shadow: 0 2px 10px rgba(65, 88, 208, 0.2);
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .ai-assistant-btn:hover {
+            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+        }
+
+        .submit-suspicious-btn:hover {
+            box-shadow: 0 4px 15px rgba(65, 88, 208, 0.3);
+        }
+
+        /* Mobile styles */
+        @media (max-width: 768px) {
+            .action-button {
+                padding: 10px 20px;
+                font-size: 13px;
+                bottom: 15px;
+            }
+
+            .ai-assistant-btn {
+                right: 10px;
+            }
+
+            .submit-suspicious-btn {
+                left: 15px;
+            }
+        }
+
+        /* Small mobile styles */
+        @media (max-width: 480px) {
+            .action-button {
+                padding: 8px 16px;
+                font-size: 12px;
+            }
+
+            .ai-assistant-btn {
+                right: 8px;
+            }
+
+            .submit-suspicious-btn {
+                left: 12px;
+            }
+        }
+
+        /* Extra small mobile styles */
+        @media (max-width: 360px) {
+            .action-button {
+                padding: 8px 12px;
+            }
+
+            .ai-assistant-btn {
+                right: 5px;
+            }
+
+            .submit-suspicious-btn {
+                left: 8px;
+            }
+        }
+    </style>
+</head>
+<body data-bs-theme="light">
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <button class="ai-assistant-btn action-button" data-bs-toggle="modal" data-bs-target="#assistantModal">
+        <i class="fas fa-robot"></i>
+        <span>Ask AI Assistant</span>
+    </button>
+
+    <button class="submit-suspicious-btn action-button" data-bs-toggle="modal" data-bs-target="#submitModal">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Report URL</span>
+    </button>
+
+    <!-- AI Assistant Modal -->
+    <div class="modal fade" id="assistantModal" tabindex="-1" aria-labelledby="assistantModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="assistantModalLabel">
+                        <i class="fas fa-robot me-2"></i>
+                        SuiGuard Assistant
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="chat-container" id="chatContainer">
+                        <div class="chat-message assistant-message">
+                            Hello! I'm your AI security assistant. How can I help you understand the URL analysis results?
+                        </div>
+                    </div>
+                    <div class="typing-indicator" id="typingIndicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="input-group chat-input">
+                        <input type="text" class="form-control" id="userQuestion" 
+                               placeholder="Ask about the URL analysis or security concerns...">
+                        <button class="btn btn-analyze" id="askButton">
+                            <i class="fas fa-paper-plane"></i>
+                            Ask
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="submitModal" tabindex="-1" aria-labelledby="submitModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="submitModalLabel">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Report Suspicious URL
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="submitForm">
+                        <div class="floating-label-group">
+                            <label>
+                                <i class="fas fa-link"></i>
+                                Suspicious URL
+                            </label>
+                            <div class="url-input-group">
+                                <i class="fas fa-globe"></i>
+                                <input type="url" class="form-control border-0" id="suspiciousUrl" 
+                                    placeholder="Enter the suspicious URL here..." required>
+                            </div>
+                        </div>
+                        <div class="floating-label-group">
+                            <label>
+                                <i class="fas fa-comment-alt"></i>
+                                Why is this URL suspicious? (Optional)
+                            </label>
+                            <textarea class="form-control" id="description" 
+                                placeholder="e.g., 'Received in a suspicious email', 'Asks for sensitive information', etc."></textarea>
+                        </div>
+                    </div>
+                    <div class="success-animation" id="successMessage">
+                        <i class="fas fa-check-circle"></i>
+                        <h4>Thank You for Your Report!</h4>
+                        <p>Together we're making the internet safer for everyone.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-analyze" id="submitSuspiciousBtn">
+                        <i class="fas fa-paper-plane me-2"></i>
+                        Submit Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h2><i class="fas fa-shield-alt"></i> SuiGuard</h2>
+                        <p class="mb-0">Intelligent URL Security Analysis</p>
+                    </div>
+                    <div class="card-body">
+                        <form id="urlForm" class="mb-4">
+                            <div class="input-group">
+                                <input type="url" class="form-control" id="urlInput" placeholder="Enter URL to analyze" required>
+                                <button type="submit" class="btn btn-analyze text-white">
+                                    <i class="fas fa-search"></i> Analyze
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div id="loading" class="loading">
+                            <div class="spinner-border text-primary loading-spinner" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-3">Analyzing URL security...</p>
+                        </div>
+
+                        <div id="results" class="result-card">
+                            <div class="text-center mb-4">
+                                <div id="scoreCircle" class="score-circle">
+                                    <span id="riskScore">-</span>
+                                </div>
+                                <h4 class="mt-2">Risk Assessment</h4>
+                                <span id="riskBadge" class="risk-badge"></span>
+                            </div>
+
+                            <div id="riskFactors" class="mb-4">
+                                <h5><i class="fas fa-exclamation-triangle"></i> Risk Factors</h5>
+                                <ul class="list-group" id="riskFactorsList">
+                                </ul>
+                            </div>
+
+                            <div class="api-results">
+                                <div id="vtResult" class="api-result">
+                                    <h5><i class="fas fa-virus-slash"></i> VirusTotal Analysis</h5>
+                                    <div id="vtContent"></div>
+                                </div>
+
+                                <div id="gsbResult" class="api-result">
+                                    <h5><i class="fab fa-google"></i> Google Safe Browsing</h5>
+                                    <div id="gsbContent"></div>
+                                </div>
+
+                                <div id="urlscanResult" class="api-result">
+                                    <h5><i class="fas fa-search"></i> URLScan.io</h5>
+                                    <div id="urlscanContent"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.querySelector('.theme-toggle i');
+            const currentTheme = body.getAttribute('data-bs-theme');
+            const html = document.documentElement;
+            
+            if (currentTheme === 'light') {
+                body.setAttribute('data-bs-theme', 'dark');
+                html.setAttribute('data-bs-theme', 'dark');
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.setAttribute('data-bs-theme', 'light');
+                html.setAttribute('data-bs-theme', 'light');
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const body = document.body;
+            const html = document.documentElement;
+            const icon = document.querySelector('.theme-toggle i');
+            
+            if (savedTheme === 'dark') {
+                body.setAttribute('data-bs-theme', 'dark');
+                html.setAttribute('data-bs-theme', 'dark');
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            }
+        });
+
+        document.getElementById('urlForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = document.getElementById('urlInput').value;
+            
+            // Show loading, hide results
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url })
+                });
+                
+                const data = await response.json();
+                displayResults(data);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while analyzing the URL');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+
+        function displayResults(data) {
+            document.getElementById('results').style.display = 'block';
+            
+            // Display risk score
+            const score = data.risk_score;
+            document.getElementById('riskScore').textContent = score;
+            
+            // Set score circle color
+            const scoreCircle = document.getElementById('scoreCircle');
+            let color;
+            let riskLevel;
+            if (score < 30) {
+                color = '#28a745';
+                riskLevel = 'Low Risk';
+            } else if (score < 70) {
+                color = '#ffc107';
+                riskLevel = 'Medium Risk';
+            } else {
+                color = '#dc3545';
+                riskLevel = 'High Risk';
+            }
+            scoreCircle.style.background = color;
+            
+            // Set risk badge
+            const riskBadge = document.getElementById('riskBadge');
+            riskBadge.textContent = riskLevel;
+            riskBadge.style.background = color;
+            riskBadge.style.color = 'white';
+            
+            // Display risk factors
+            const riskFactorsList = document.getElementById('riskFactorsList');
+            riskFactorsList.innerHTML = '';
+            if (data.risk_factors && data.risk_factors.length > 0) {
+                data.risk_factors.forEach(factor => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.innerHTML = `<i class="fas fa-exclamation-circle text-danger"></i> ${factor}`;
+                    riskFactorsList.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.innerHTML = '<i class="fas fa-check-circle text-success"></i> No significant risk factors detected';
+                riskFactorsList.appendChild(li);
+            }
+            
+            // Display VirusTotal results
+            const vtContent = document.getElementById('vtContent');
+            if (data.virustotal.error) {
+                vtContent.innerHTML = `<div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> ${data.virustotal.error}
+                </div>`;
+            } else {
+                vtContent.innerHTML = `
+                    <div class="d-flex justify-content-between">
+                        <div>Malicious: <span class="text-danger">${data.virustotal.malicious}</span></div>
+                        <div>Suspicious: <span class="text-warning">${data.virustotal.suspicious}</span></div>
+                        <div>Clean: <span class="text-success">${data.virustotal.clean}</span></div>
+                    </div>
+                `;
+            }
+            
+            // Display Google Safe Browsing results
+            const gsbContent = document.getElementById('gsbContent');
+            if (data.google_safe_browsing.error) {
+                gsbContent.innerHTML = `<div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> ${data.google_safe_browsing.error}
+                </div>`;
+            } else {
+                const threatsFound = data.google_safe_browsing.threats_found;
+                gsbContent.innerHTML = threatsFound > 0 ?
+                    `<div class="alert alert-danger">Detected ${threatsFound} threat(s)</div>` :
+                    '<div class="alert alert-success">No threats detected</div>';
+            }
+            
+            // Display URLScan results
+            const urlscanContent = document.getElementById('urlscanContent');
+            if (data.urlscan.error) {
+                urlscanContent.innerHTML = `
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-info-circle fa-2x me-3 text-secondary"></i>
+                                <div>
+                                    <h5 class="mb-0">Analysis Error</h5>
+                                    <small class="text-muted">${data.urlscan.error}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            } else {
+                let content = '';
+                switch (data.urlscan.status) {
+                    case 'existing':
+                        content = `
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="fas fa-history fa-2x me-3 text-primary"></i>
+                                        <div>
+                                            <h5 class="mb-0">Previous Scan Found</h5>
+                                            <small class="text-muted">This URL has been analyzed before</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <h6><i class="fas fa-info-circle"></i> Scan Details</h6>
+                                                <ul class="list-unstyled ps-3">
+                                                    <li><i class="fas fa-check-circle text-success"></i> Analysis available</li>
+                                                    <li><i class="fas fa-clock text-info"></i> Quick result retrieval</li>
+                                                </ul>
+                                            </div>
+                                            
+                                            <a href="${data.urlscan.result_url}" target="_blank" 
+                                               class="btn btn-primary btn-sm">
+                                                <i class="fas fa-external-link-alt"></i> View Detailed Report
+                                            </a>
+                                        </div>
+                                        ${data.urlscan.screenshot ? `
+                                            <div class="col-md-6">
+                                                <div class="card bg-light">
+                                                    <div class="card-header py-2">
+                                                        <small><i class="fas fa-camera"></i> Website Screenshot</small>
+                                                    </div>
+                                                    <div class="card-body p-2">
+                                                        <img src="${data.urlscan.screenshot}" 
+                                                             alt="Website Screenshot" 
+                                                             class="img-fluid rounded">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'known':
+                        content = `
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="fas fa-shield-alt fa-2x me-3 text-success"></i>
+                                        <div>
+                                            <h5 class="mb-0">Known Website</h5>
+                                            <small class="text-muted">${data.urlscan.message}</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="card bg-light h-100">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-globe"></i> Domain Information
+                                                    </h6>
+                                                    <p class="card-text">
+                                                        <strong>Domain:</strong> ${data.urlscan.domain_info.domain}<br>
+                                                        <strong>Previous Scans:</strong> ${data.urlscan.domain_info.total_scans}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card bg-light h-100">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-chart-bar"></i> Reputation
+                                                    </h6>
+                                                    <div class="text-success">
+                                                        <i class="fas fa-check-circle"></i> Established Domain
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'blocked':
+                        content = `
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="fas fa-shield-alt fa-2x me-3 text-info"></i>
+                                        <div>
+                                            <h5 class="mb-0">Protected Website</h5>
+                                            <small class="text-muted">This appears to be a legitimate website</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="alert alert-info border-0 mb-0">
+                                        <i class="fas fa-info-circle"></i> ${data.urlscan.message}<br>
+                                        <small class="text-muted">${data.urlscan.description}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'submitted':
+                        content = `
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="fas fa-search fa-2x me-3 text-primary"></i>
+                                        <div>
+                                            <h5 class="mb-0">New Scan Initiated</h5>
+                                            <small class="text-muted">Analysis in progress</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="progress mb-3" style="height: 10px;">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                             role="progressbar" style="width: 100%"></div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock"></i> Scan submitted successfully
+                                        </small>
+                                        <a href="${data.urlscan.result_url}" target="_blank" 
+                                           class="btn btn-primary btn-sm">
+                                            <i class="fas fa-external-link-alt"></i> View Results
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                        
+                    default:
+                        content = `
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-info-circle fa-2x me-3 text-secondary"></i>
+                                        <div>
+                                            <h5 class="mb-0">Status Update</h5>
+                                            <small class="text-muted">Current status: ${data.urlscan.status}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                }
+                urlscanContent.innerHTML = content;
+            }
+        }
+
+        document.getElementById('submitSuspiciousBtn').addEventListener('click', async () => {
+            const url = document.getElementById('suspiciousUrl').value;
+            const description = document.getElementById('description').value;
+            
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            try {
+                const response = await fetch('/submit-suspicious', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url, description })
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    document.getElementById('submitForm').style.display = 'none';
+                    document.getElementById('successMessage').style.display = 'block';
+                    
+                    // Reset form
+                    document.getElementById('suspiciousUrl').value = '';
+                    document.getElementById('description').value = '';
+                    
+                    // Auto close after 3 seconds
+                    setTimeout(() => {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('submitModal'));
+                        modal.hide();
+                        // Reset the form view after modal is closed
+                        setTimeout(() => {
+                            document.getElementById('submitForm').style.display = 'block';
+                            document.getElementById('successMessage').style.display = 'none';
+                        }, 300);
+                    }, 3000);
+                }
+            } catch (error) {
+                alert('An error occurred. Please try again.');
+            }
+        });
+
+        let currentScanResults = {};
+
+        async function askAssistant(question) {
+            const typingIndicator = document.getElementById('typingIndicator');
+            const chatContainer = document.getElementById('chatContainer');
+            
+            // Add user message
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'chat-message user-message';
+            userMessageDiv.textContent = question;
+            chatContainer.appendChild(userMessageDiv);
+            
+            // Show typing indicator
+            typingIndicator.style.display = 'block';
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            try {
+                const response = await fetch('/ask-assistant', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question: question,
+                        url: document.getElementById('urlInput').value,
+                        scanResults: currentScanResults || {}
+                    })
+                });
+
+                const data = await response.json();
+                
+                // Hide typing indicator
+                typingIndicator.style.display = 'none';
+                
+                // Add response or error message
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'chat-message assistant-message';
+                
+                if (data.status === 'success') {
+                    // Create a container for the formatted content
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'message-content';
+                    // Convert markdown to HTML and set it
+                    contentDiv.innerHTML = marked.parse(data.response);
+                    messageDiv.appendChild(contentDiv);
+                } else {
+                    messageDiv.classList.add('text-danger');
+                    messageDiv.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            ${data.error || 'An error occurred while processing your request.'}
+                            ${data.details ? `<br><small class="text-muted">${data.details}</small>` : ''}
+                        </div>
+                    `;
+                }
+                
+                chatContainer.appendChild(messageDiv);
+                
+            } catch (error) {
+                // Hide typing indicator
+                typingIndicator.style.display = 'none';
+                
+                // Show error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'chat-message assistant-message text-danger';
+                errorDiv.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        Network error occurred. Please check your connection and try again.
+                    </div>
+                `;
+                chatContainer.appendChild(errorDiv);
+                console.error('Chat Error:', error);
+            }
+            
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Configure marked options
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            headerIds: false
+        });
+
+        // Event listeners for the chat
+        document.getElementById('askButton').addEventListener('click', () => {
+            const question = document.getElementById('userQuestion').value.trim();
+            if (question) {
+                askAssistant(question);
+                document.getElementById('userQuestion').value = '';
+            }
+        });
+
+        document.getElementById('userQuestion').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const question = e.target.value.trim();
+                if (question) {
+                    askAssistant(question);
+                    e.target.value = '';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
