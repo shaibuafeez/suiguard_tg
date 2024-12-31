@@ -32,7 +32,7 @@ app.init_gemini()
 
 # Load the spam detection model
 try:
-    spam_model = joblib.load("c:\\Users\\HP\\Downloads\\spam.joblib")
+    spam_model = joblib.load("app/models/__pycache__/spam.joblib")
     SPAM_DETECTION_ENABLED = True
 except:
     logger.warning("Spam detection model not found. Spam detection will be disabled.")
